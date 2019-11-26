@@ -3,10 +3,10 @@ a stickfighter multiplayer io game
 
 ## The project and our analysis:
 Our main idea is to product a game on Unity with a NodeJs server. It will be a web application. We will save the best scores on a MongoDB database.<br/>
-The main point is first: to share your information with the server, to get the information from the server, to update the information locally according to the information you got from the server and the last point is to communicate with the database.<br/>
+The main point is first: to share your information with the server, to get the information from the server, to update the information locally according to the information you got from the server and the last point is to communicate with the database.<br/><br/>
 This is a 2D fighting game where one single attack kills you. The attacks are a sword and a shield. The player use the sword to attack and kill the other player, and the shield is here to block the other player’s attacks. If you stand still for at least one second you will be rewarded by death. A game is composed of 10 sessions in which one only have one life and will die when touched by an enemy or when you fall out of the scene.<br/>
-	This game is also a platforming one : to avoid too much repetition between the different sessions we will create multiple parts with different mechanisms.<br/>
-	When a game ends, all the players are sent to a page where the scores of the sessions are displayed. From there they are able to return to the main menu and to keep on playing. When the last player leaves, the room is deleted.
+	This game is also a platforming one : to avoid too much repetition between the different sessions we will create multiple parts with different mechanisms.<br/><br/>
+	When a game ends, all the players are sent to a page where the scores of the sessions are displayed. From there they are able to return to the main menu and to keep on playing. When the last player leaves, the room is deleted.<br/>
 	**About the score** : many informations may be stored : the maximum amount of consecutive sessions victories, the number of kills in a single game or in multiple games.<br/>
 	Last but not least the **main menu**: it will allow you to join or create a session, to access the best scores and to choose the shortcut keys’ configuration to control the player’s character.<br/>
 <br/>
