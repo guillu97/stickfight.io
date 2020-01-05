@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CreateMenu : MonoBehaviour
 {
@@ -9,7 +10,7 @@ public class CreateMenu : MonoBehaviour
     void OnMouseUp(){
         if(isReturn)
         {
-            Application.LoadLevel(0);
+            SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
         }
         /*
         if (isCreate)

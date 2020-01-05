@@ -64,7 +64,7 @@ public class CharacterMove : MonoBehaviour
 
             
             // sharing position if the position changed
-            if(Vector3.Distance(transform.position, oldPosition) > 0.01f){
+            if(Vector3.Distance(transform.position, oldPosition) > 0.02f){
                 Debug.Log(Vector3.Distance(transform.position, oldPosition));
                 io.Emit("playerMoved",JsonUtility.ToJson(transform.position));
                 oldPosition = transform.position;

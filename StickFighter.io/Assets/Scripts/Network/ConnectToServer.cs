@@ -42,8 +42,10 @@ public class ConnectToServer : MonoBehaviour {
         public Vector3 pos;
     }
 
+    [HideInInspector] // Hides var below
     public SocketIOController io;
     public GameObject playerPrefab;
+    public GameObject playerSpawn;
 
 	void Start() {
         io = GameObject.Find("SocketIOController").GetComponent<SocketIOController>();
@@ -94,17 +96,8 @@ public class ConnectToServer : MonoBehaviour {
             Destroy(GameObject.Find(playerName));
         });
 
-        io.On("assignPlayerId", (SocketIOEvent ev) => {
-            Debug.Log("assignPlayerId received");
-            string playerId = JsonUtility.FromJson<PlayerIdJSON>(ev.data).playerId;
-            Debug.Log(playerId);
-            string playerName = "Player" + playerId;
-            // Instantiate at position (0, 0, 0) and zero rotation.
-            GameObject player = Instantiate(playerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
-            player.name = playerName;
-            LocalPlayer localPlayer = player.GetComponent<LocalPlayer>();
-            localPlayer.isLocalPlayer = true;
-            localPlayer.playerId = playerId;
+        io.On("spawnPlayer", (SocketIOEvent ev) => {
+            playerSpawn.GetComponent<SpawnPlayer>().spawnLocalPlayer();
         });
 
         io.On("moveInput", (SocketIOEvent ev) => {

@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 
-public class GenerateMovingHorizontalCubes : MonoBehaviour
+public class GenerateMovingCubes : MonoBehaviour
 {
     public int nbrWantedCubes;
     public GameObject prefab;
 
     private int currentCubes = 0;
+    protected Vector3 startingPosition = new Vector3(0, 0, 0);
 
     // Use this for initialization
     void Start()
@@ -22,15 +23,26 @@ public class GenerateMovingHorizontalCubes : MonoBehaviour
         }
     }
 
-    private void spawnCube()
+    protected virtual Vector2 GetMovingForce()
+    {
+        return transform.right * 500;
+    }
+
+    protected virtual Vector3 GetStartingPosition()
     {
         int height = Random.Range(-1, 1);
 
-        var obj = Instantiate(prefab, new Vector3(-22, height * 2, 0), Quaternion.identity);
+        var actualStartingPos = startingPosition;
+        actualStartingPos.y = height * 2;
+        return actualStartingPos;
+    }
+
+    public void spawnCube()
+    {
+        var obj = Instantiate(prefab, GetStartingPosition(), Quaternion.identity);
         obj.tag = "Moving-Cube";
         var rb = obj.gameObject.AddComponent<Rigidbody2D>();
-        rb.mass = 9000;
-        rb.AddForce(transform.right * 5000000);
+        rb.AddForce(GetMovingForce());
         rb.gravityScale = 0;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
@@ -10,11 +11,11 @@ public class MainMenu : MonoBehaviour
     void OnMouseUp(){
         if(isJoin)
         {
-            Application.LoadLevel(1);
+            SceneManager.LoadScene("JoinMenu", LoadSceneMode.Single);
         }
         if (isCreate)
         {
-            Application.LoadLevel(2);
+            SceneManager.LoadScene("CreateMenu", LoadSceneMode.Single);
         }
     } 
 }
