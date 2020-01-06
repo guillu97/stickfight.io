@@ -33,26 +33,7 @@ gameSocket = io.on('connection', function(socket){
     console.log(players)
     console.log(' ')
 
-    // if the player is not the first one then send the other player position
-    if(numOfPlayers >= 1){
-        playersCopy = []
-        for (var [key, value] of players) {
-            if(key != socket.id){
-                playersCopy.push({playerId:key, pos:value.pos})
-            }
-        }
-        jsonObj = {Players:playersCopy}
-
-        // debug
-        console.log('jsonObj')
-        console.log(jsonObj)
-
-        // debug
-        //io.in(players.get(socket.id).room).emit('allPlayersPositions', jsonObj)
-
-        socket.to(players.get(socket.id).room).emit('allPlayersPositions', jsonObj) // then the current position of all the players in the game, to spawn them locally
-    }
-
+    
     //socket.broadcast.emit('newPlayer')
     
 
@@ -241,6 +222,61 @@ gameSocket = io.on('connection', function(socket){
 
     })
 
+    socket.on('requestPlayersPos', () => {
+        console.log('')
+        console.log('requestPlayersPos received')
+        console.log('')
+        
+        var allRoomPlayersExceptPlayer = []
+        console.log(rooms.get(players.get(socket.id).room))
+        
+        for(playerId of rooms.get(players.get(socket.id).room) )
+        {
+            console.log('inside loop')
+            console.log(playerId)
+            if(playerId !== socket.id){
+                allRoomPlayersExceptPlayer.push(playerId)
+            }
+        }
+
+        console.log(allRoomPlayersExceptPlayer)
+        // if the player is not alone in the room
+        if(Array.isArray(allRoomPlayersExceptPlayer) && allRoomPlayersExceptPlayer.length > 0)
+        {
+
+            var playersCopy = []
+            for(playerId of allRoomPlayersExceptPlayer)
+            {
+                if(!players.get(playerId).hasOwnProperty("dead") || players.get(playerId).dead === false)
+                {
+                    playersCopy.push({playerId:playerId, pos:players.get(playerId).pos})
+                }
+            }
+        }
+
+        /*
+        var playersCopy = []
+        for (var [key, value] of players) {
+            if(!value.hasOwnProperty("dead") || value.dead === false){
+                if(key != socket.id){
+                    playersCopy.push({playerId:key, pos:value.pos})
+                }
+                
+            }
+        }
+        */
+        jsonObj = {Players:playersCopy}
+
+        // debug
+        console.log('jsonObj')
+        console.log(jsonObj)
+
+        // debug
+        //io.in(players.get(socket.id).room).emit('allPlayersPositions', jsonObj)
+
+        socket.emit('allPlayersPositions', jsonObj) // then the current position of all the players in the game, to spawn them locally
+    })
+
     socket.on('refreshRoomsList', (data,callback) => {
         console.log('refreshRoomsList received')
         console.log(rooms)
@@ -267,9 +303,9 @@ gameSocket = io.on('connection', function(socket){
         socket.to(players.get(socket.id).room).emit('moveInput', mov)
     })
 
-    socket.on('jump',function(data,callback){
+    socket.on('jump',function(){
         console.log('jump received')
-        socket.to(players.get(socket.id).room).emit('jump', socket.id)
+        socket.to(players.get(socket.id).room).emit('jump', {playerId: socket.id})
     })
 
     socket.on('playerMoved',function(data, callback){
@@ -278,6 +314,63 @@ gameSocket = io.on('connection', function(socket){
         console.log('player position received')
         pos = {playerId: socket.id, pos: data}
         socket.to(players.get(socket.id).room).emit('playerMoved', pos)
+    })
+
+    socket.on("playerRotated", function(data, callback){
+        /*players.set(socket.id, Object.assign(players.get(socket.id),{pos: data}))
+        console.log(players)
+        */
+        console.log('')
+        console.log('playerRotated received')
+        console.log(data)
+        console.log('')
+
+        pos = {playerId: socket.id, pos: data}
+        socket.to(players.get(socket.id).room).emit('playerRotated', pos)
+    })
+
+    socket.on('velocityChanged',function(data, callback){
+        console.log('')
+        console.log('velocityChanged received')
+        console.log(data)
+        console.log('')
+
+        json = {playerId: socket.id, velocity: data}
+        socket.to(players.get(socket.id).room).emit('velocityChanged', json)
+    })
+    
+
+    socket.on('attack', () => {
+        console.log('')
+        console.log('attack received')
+        console.log('')
+        socket.to(players.get(socket.id).room).emit('playerAttack', {playerId: socket.id})
+    })
+
+    socket.on('endAttack', () => {
+        console.log('endAttack received')
+        socket.to(players.get(socket.id).room).emit('playerEndAttack', {playerId: socket.id})
+    })
+
+
+    socket.on('playerKilled', (data) =>{
+        console.log('')
+        console.log('playerKilled received')
+        console.log(data)
+        console.log('')
+
+        players.set(socket.id, Object.assign(players.get(socket.id),{dead: true}))
+
+        // score : +1 for socket id player
+
+        socket.to(players.get(socket.id).room).emit('playerKilled', {playerId: data.playerId})
+    })
+
+    socket.on('deathByDeathFloor', () => {
+        console.log('deathByDeathFloor received')
+        players.set(socket.id, Object.assign(players.get(socket.id),{dead: true}))
+        // send death of the player to the other players
+        socket.to(players.get(socket.id).room).emit('playerDeathByDeathFloor', {playerId: socket.id})
     })
 
 
