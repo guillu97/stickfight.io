@@ -7,13 +7,25 @@ console.log('server started')
 var players = new Map()
 var rooms = new Map()
 // debug
-//rooms.set('test',{})
+//rooms.set('test2',['playerId'])
+//rooms.set('test3',['playerId'])
+
+const NUM_PLAYER_MAX = 4
 
 var numOfPlayers = 0
 gameSocket = io.on('connection', function(socket){
+
+
+
+    // ### the connection of a player ###
+
     numOfPlayers += 1
     //var playerNum = numOfPlayers
     players.set(socket.id,{}) // the socket id is assign to a null object where we could store things : position...
+
+    // debug
+    //players.set(socket.id,{pos:'test',room:'test2'})
+    //socket.join(players.get(socket.id).room)
 
     console.log('socket connected : ' + socket.id)
     console.log('num of players connected : ' + numOfPlayers)
@@ -22,17 +34,23 @@ gameSocket = io.on('connection', function(socket){
     console.log(' ')
 
     // if the player is not the first one then send the other player position
-    if(numOfPlayers > 1){
+    if(numOfPlayers >= 1){
         playersCopy = []
         for (var [key, value] of players) {
             if(key != socket.id){
-                playersCopy.push(Object.assign({playerId:key}, value))
+                playersCopy.push({playerId:key, pos:value.pos})
             }
         }
         jsonObj = {Players:playersCopy}
+
+        // debug
         console.log('jsonObj')
         console.log(jsonObj)
-        socket.emit('allPlayersPositions', jsonObj) // then the current position of all the players in the game, to spawn them locally
+
+        // debug
+        //io.in(players.get(socket.id).room).emit('allPlayersPositions', jsonObj)
+
+        socket.to(players.get(socket.id).room).emit('allPlayersPositions', jsonObj) // then the current position of all the players in the game, to spawn them locally
     }
 
     //socket.broadcast.emit('newPlayer')
@@ -41,6 +59,8 @@ gameSocket = io.on('connection', function(socket){
 
 
     
+    // ### the disconnection of a player ###
+    // remove player from the rooms and players tabs
 
     socket.on('disconnect', function(){
         console.log('socket disconnected : ' + socket.id)
@@ -64,16 +84,22 @@ gameSocket = io.on('connection', function(socket){
             // send a disconnected event to the other players in the room
             socket.to(players.get(socket.id).room).emit('playerDisconnected', {playerId: socket.id})
 
-            console.log('debug')
+            console.log('debug in disconnection')
+            console.log(rooms)
+
+            console.log(rooms.get(players.get(socket.id).room))
             // remove the player from the room
             var index = rooms.get(players.get(socket.id).room).indexOf(socket.id);
+            console.log(index);
             if (index !== -1) rooms.get(players.get(socket.id).room).splice(index, 1);
 
-            // if the rooms becomes empty then remove it
+            // if the room becomes empty then remove it
             if(rooms.get(players.get(socket.id).room).length === 0){
                 rooms.delete(players.get(socket.id).room)
             }
         }
+
+        socket.leave(players.get(socket.id).room)
         
 
         // remove the player from the players Map
@@ -89,6 +115,11 @@ gameSocket = io.on('connection', function(socket){
         
     })
 
+
+
+
+
+    // ### all the test events ### 
 
     socket.on('test-event1', function(){
         console.log('got test-event1')
@@ -113,6 +144,10 @@ gameSocket = io.on('connection', function(socket){
             test2: "test3"
         })
     })
+
+
+
+    // ### events for the menu ###
 
     socket.on('createRoom', function(data, callback){
         console.log('createRoom received')
@@ -145,6 +180,8 @@ gameSocket = io.on('connection', function(socket){
             else{
                 Object.assign(players.get(socket.id), {room:roomName})
             }
+
+            socket.join(roomName)
             callback({
                 roomAvailable: true
             })
@@ -161,6 +198,68 @@ gameSocket = io.on('connection', function(socket){
         
     })
 
+    socket.on('joinRoom', function(data, callback){
+        console.log('joinRoom received')
+        console.log(data)
+
+        roomName = data.roomName
+        available = false;
+        for (const key of rooms.keys()) {
+            console.log(key)
+            if(key === roomName){
+                // check if there are already to much people
+                if(rooms.get(roomName).length < NUM_PLAYER_MAX){
+                    available = true;
+                }
+                if(rooms.get(roomName).length + 1 === NUM_PLAYER_MAX){
+                    available = true
+                    //TODO: start the game
+                }
+            }
+        }
+        if(available === true){
+            // join room
+            rooms.get(roomName).push(socket.id)
+            console.log("debug in join")
+            console.log(rooms.get(roomName))
+
+            Object.assign(players.get(socket.id),{room:roomName})
+
+            socket.join(roomName)
+
+            // send callback available true
+            callback({
+                roomAvailable: true
+            })
+        }
+        else{
+            // send callback available false
+            callback({
+                roomAvailable: false
+            })
+        }
+
+    })
+
+    socket.on('refreshRoomsList', (data,callback) => {
+        console.log('refreshRoomsList received')
+        console.log(rooms)
+
+        // expected result
+        //const expectedResult = [{roomName:'name',numPlayers:3}, {...}, ...]
+        var result = []
+        for(var [key, value] of rooms){
+            //console.log(key)
+            //console.log(value.length)
+            result.push({roomName:key,numPlayers:value.length})
+        }
+        JSONobj = {Rooms:result}
+        console.log(JSONobj)
+        callback(JSONobj)
+    })
+
+
+    // ### For the player movements ###
 
     socket.on('moveInput',function(data,callback){
         console.log('moveInput received')
