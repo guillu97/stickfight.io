@@ -6,7 +6,12 @@ public class PlayerState : MonoBehaviour
 {
     public float moveInput = 0;
     public bool jump = false;
+    
     private Vector3 position;
+
+    public bool isAttacking = false;
+
+    public bool isLookingToRight = true;
 
     public float getMoveInput()
     {

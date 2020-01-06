@@ -13,6 +13,8 @@ public class SpawnPlayer : MonoBehaviour
     {
         io = GameObject.Find("SocketIOController").GetComponent<SocketIOController>();
         spawnLocalPlayer();
+        requestPlayersPosition();
+        // TODO : request start => check if there are 4 players in the room
     }
 
     public void spawnLocalPlayer(){
@@ -21,9 +23,16 @@ public class SpawnPlayer : MonoBehaviour
         // Instantiate at the position of the playerSpawn object and zero rotation.
         GameObject player = Instantiate(playerPrefab, transform.position, Quaternion.identity);
 
+            
         player.name = playerName;
         LocalPlayer localPlayer = player.GetComponent<LocalPlayer>();
         localPlayer.isLocalPlayer = true;
+        localPlayer.tag = "Knight";
         localPlayer.playerId = io.SocketID;
+    }
+
+    public void requestPlayersPosition()
+    {
+        io.Emit("requestPlayersPos");
     }
 }

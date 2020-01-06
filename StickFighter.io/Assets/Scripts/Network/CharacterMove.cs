@@ -36,9 +36,13 @@ public class CharacterMove : MonoBehaviour
 
     private BoxCollider2D boxCollider;
 
+    private BoxCollider2D deathFloor;
+
     private Vector2 velocity;
 
     private Vector3 oldPosition;
+
+    
 
 
     /// <summary>
@@ -49,7 +53,8 @@ public class CharacterMove : MonoBehaviour
 
     private void Start()
     {
-        io = GameObject.Find("NetworkManager").GetComponent<ConnectToServer>().io;
+        //io = GameObject.Find("NetworkManager").GetComponent<ConnectToServer>().io;
+        deathFloor = GameObject.Find("DeathFloor").GetComponent<BoxCollider2D>();
     }
 
     private void Awake()
@@ -66,7 +71,7 @@ public class CharacterMove : MonoBehaviour
             // sharing position if the position changed
             if(Vector3.Distance(transform.position, oldPosition) > 0.02f){
                 Debug.Log(Vector3.Distance(transform.position, oldPosition));
-                io.Emit("playerMoved",JsonUtility.ToJson(transform.position));
+                //ioEmit("playerMoved",JsonUtility.ToJson(transform.position));
                 oldPosition = transform.position;
             }
             
@@ -85,7 +90,7 @@ public class CharacterMove : MonoBehaviour
                 
                 if (Input.GetButtonDown("Jump"))
                 {
-                    io.Emit("jump");
+                    //ioEmit("jump");
                     // Calculate the velocity required to achieve the target jump height.
                     velocity.y = Mathf.Sqrt(2 * jumpHeight * Mathf.Abs(Physics2D.gravity.y));
                 }
@@ -101,7 +106,7 @@ public class CharacterMove : MonoBehaviour
 
                 Movement m = new Movement();
                 m.moveInput = moveInput;
-                io.Emit("moveInput", JsonUtility.ToJson(m));
+                //ioEmit("moveInput", JsonUtility.ToJson(m));
                 velocity.x = Mathf.MoveTowards(velocity.x, speed * moveInput, acceleration * Time.deltaTime);
             }
             else
@@ -217,6 +222,20 @@ public class CharacterMove : MonoBehaviour
             // Ignore our own collider.
             if (hit == boxCollider)
                 continue;
+
+            // Ignore the death floor
+            if(hit == deathFloor)
+            {
+                Debug.Log("DeathFloor entered");
+                // destroy the player
+                Destroy(gameObject);
+
+                //send io death by deathfloor
+                //ioEmit("deathByDeathFloor");
+
+                continue;
+            }
+                
 
             ColliderDistance2D colliderDistance = hit.Distance(boxCollider);
 

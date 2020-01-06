@@ -3,30 +3,11 @@ using System.Collections;
 using UnitySocketIO;
 using UnitySocketIO.Events;
 
+using Platformer.Mechanics;
+
 
 public class ConnectToServer : MonoBehaviour {
 
-/*
-    [System.Serializable]
-    private class Players{
-        public string playerId;
-        //public Position pos;
-        public Vector3 pos;
-    }
-
-    [System.Serializable]
-    private class ListPlayers{
-        public List<Players> Players = new List<Players>();
-    }
-    */
-
-    
-
-/*
-    private class Position{
-        public Vector3 pos;
-    }
-*/
 
     private class PlayerIdJSON{
         public string playerId;
@@ -40,6 +21,11 @@ public class ConnectToServer : MonoBehaviour {
     private class PlayerPos {
         public string playerId;
         public Vector3 pos;
+    }
+
+    private class PlayerVelocity {
+        public string playerId;
+        public Vector2 velocity;
     }
 
     [HideInInspector] // Hides var below
@@ -84,8 +70,10 @@ public class ConnectToServer : MonoBehaviour {
                 string playerName = "Player" + player.playerId;
                 GameObject playerInstance = Instantiate(playerPrefab, player.pos, Quaternion.identity);
                 playerInstance.name = playerName;
-                LocalPlayer localPlayer = playerInstance.GetComponent<LocalPlayer>();
+                playerInstance.tag = "Player";
+                /*LocalPlayer localPlayer = playerInstance.GetComponent<LocalPlayer>();
                 localPlayer.playerId = player.playerId;
+                */
             }
         });
 
@@ -118,8 +106,12 @@ public class ConnectToServer : MonoBehaviour {
             if(playerToMove == null){
                 playerToMove = Instantiate(playerPrefab, playerPos.pos, Quaternion.identity);
                 playerToMove.name = playerName;
+                playerToMove.tag = "Player";
                 playerToMove.GetComponent<LocalPlayer>().setPlayerId(playerId);
             }
+
+            // TODO: playerToMove.Move(player.pos);
+
             playerToMove.transform.position = playerPos.pos;
             Debug.Log("playerPos.pos");
             Debug.Log(playerPos.pos);
@@ -131,12 +123,79 @@ public class ConnectToServer : MonoBehaviour {
             }*/
         });
 
+        io.On("playerRotated",(SocketIOEvent ev) => {
+            Debug.Log("playerRotated received : " + ev.data.ToString());
+            PlayerPos playerPos = JsonUtility.FromJson<PlayerPos>(ev.data);
+            string playerId = playerPos.playerId;
+            string playerName = "Player" + playerId;
+            Debug.Log(playerName);
+            GameObject playerToMove = GameObject.Find(playerName);
+
+            playerToMove.transform.eulerAngles = playerPos.pos;
+            Debug.Log("playerPos.pos");
+            Debug.Log(playerPos.pos);
+        });
+
+        io.On("velocityChanged",(SocketIOEvent ev) => {
+            Debug.Log("velocityChanged received : " + ev.data.ToString());
+            PlayerVelocity playerVelocity = JsonUtility.FromJson<PlayerVelocity>(ev.data);
+            string playerId = playerVelocity.playerId;
+            string playerName = "Player" + playerId;
+            Debug.Log(playerName);
+            GameObject playerToMove = GameObject.Find(playerName);
+
+            playerToMove.GetComponent<PlayerController>().ComputeVelocity(playerVelocity.velocity);
+            /*if (playerVelocity.velocity.x == 0)
+            {
+                playerToMove.GetComponent<Animator>.SetBool("IsRunning", false);
+            }
+            else
+            {
+                playerToMove.GetComponent<Animator>.SetBool("IsRunning", true);
+            }*/
+            Debug.Log("playerVelocity.velocity");
+            Debug.Log(playerVelocity.velocity);
+        });
+
+        
+
+        io.On("playerAttack",(SocketIOEvent ev) => {
+            Debug.Log("playerAttack received");
+            string playerId = JsonUtility.FromJson<PlayerIdJSON>(ev.data).playerId;
+            string playerName = "Player" + playerId;
+            GameObject playerInstance = GameObject.Find(playerName);
+            playerInstance.GetComponent<PlayerState>().isAttacking = true;
+            playerInstance.GetComponent<Animator>().SetTrigger("Attack");
+        });
+
+        io.On("playerEndAttack",(SocketIOEvent ev) => {
+            Debug.Log("playerAttack received");
+            string playerId = JsonUtility.FromJson<PlayerIdJSON>(ev.data).playerId;
+            string playerName = "Player" + playerId;
+            GameObject.Find(playerName).GetComponent<PlayerState>().isAttacking = false;
+        });
+
         io.On("jump", (SocketIOEvent ev) => {
             Debug.Log("jump received");
-            string playerName = "Player" + ev.data;
+            string playerId = JsonUtility.FromJson<PlayerIdJSON>(ev.data).playerId;
+            string playerName = "Player" + playerId;
             GameObject.Find(playerName).GetComponent<PlayerState>().jump = true;
         });
         
+
+        io.On("playerKilled", (SocketIOEvent ev) => {
+            Debug.Log("another player killed by a player");
+            string playerId = JsonUtility.FromJson<PlayerIdJSON>(ev.data).playerId;
+            string playerName = "Player" + playerId;
+            Destroy(GameObject.Find(playerName));
+        });
+
+        io.On("playerDeathByDeathFloor", (SocketIOEvent ev) => {
+            Debug.Log("another player killed by death floor");
+            string playerId = JsonUtility.FromJson<PlayerIdJSON>(ev.data).playerId;
+            string playerName = "Player" + playerId;
+            Destroy(GameObject.Find(playerName));
+        });
 
         /*io.On("anotherPlayerConnected", (SocketIOEvent e) => {
             Debug.Log(e.data);
