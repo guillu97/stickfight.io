@@ -5,6 +5,7 @@ using UnitySocketIO;
 using UnitySocketIO.Events;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class RefreshRooms : MonoBehaviour
 {
@@ -50,5 +51,10 @@ public class RefreshRooms : MonoBehaviour
             }
 
         });
+    }
+
+    public void RefreshLevel()
+    {
+        SceneManager.LoadScene("JoinMenu", LoadSceneMode.Single);
     }
 }
